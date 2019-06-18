@@ -6,39 +6,28 @@ object NewsModel {
     data class Result(
         val status : String,
         val copyright : String,
-        val section : String,
-        val last_updated : String,
-        val num_results : Int,
-        val results : List<Results>
+        val response : Response
     )
 
-    data class Results (
-        val section : String,
-        val subsection : String,
-        val title : String,
+    data class Response (
+        val docs : List<Docs>
+    )
+
+    data class Docs (
+
+        val web_url : String,
+        val snippet : String,
+        val lead_paragraph : String,
         val abstract : String,
-        val url : String,
-        val byline : String,
-        val item_type : String,
-        val updated_date : String,
-        val created_date : String,
-        val published_date : String,
-        val material_type_facet : String,
-        val kicker : String,
-        val multimedia : List<Multimedia>,
-        val short_url : String
+        val source : String,
+        val multimedia : List<Multimedia>
     )
 
     data class Multimedia (
 
-        val url : String,
-        val format : String,
-        val height : Int,
-        val width : Int,
-        val type : String,
         val subtype : String,
-        val caption : String,
-        val copyright : String
+        val url : String,
+        val height : Int,
+        val width : Int
     )
-
 }

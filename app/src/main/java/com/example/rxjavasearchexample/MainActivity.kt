@@ -12,24 +12,30 @@ import io.reactivex.ObservableOnSubscribe
 import io.reactivex.ObservableSource
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
+    private val subscriptions = CompositeDisposable()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
     }
 
-    //some changes
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
 
         val searchView = menu?.findItem(R.id.action_search)?.actionView as SearchView
 
-        Observable.create(ObservableOnSubscribe<String> { subscriber ->
+        //on typing the keywords in the search view of toolbar the keywords are passed to the api call
+        // and the result is brought back to the main thread
+
+        subscriptions.addAll(Observable.create(ObservableOnSubscribe<String> { subscriber ->
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextChange(newText: String?): Boolean {
                     subscriber.onNext(newText!!)
@@ -46,24 +52,31 @@ class MainActivity : AppCompatActivity() {
             .debounce(500, TimeUnit.MILLISECONDS)
             .distinctUntilChanged()
             .filter { text -> text.isNotBlank() }
-            .switchMapSingle { result -> NetworkCall()}
+            .switchMapSingle {
+                    result -> NetworkCall(result)  //making network call to the server
+
+            }
             .subscribe { text ->
                 Log.d("subscriber", "subscriber: $text")
-
-                //from here make a call to view model to get the search results
-            }
+                //actual results of the search are fetched here
+            })
         return true
     }
 
 
-    fun NetworkCall(): Single<NewsModel.Result> {
+    override fun onDestroy() {
+        super.onDestroy()
+        subscriptions.dispose()
+    }
+
+
+    fun NetworkCall(query:String): Single<NewsModel.Result> {
 
         return ApiService.create().getTopNews(
-            "science.json",
-            Constants.API_KEY
+            query, Constants.API_KEY
         )
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-
     }
+
 }
