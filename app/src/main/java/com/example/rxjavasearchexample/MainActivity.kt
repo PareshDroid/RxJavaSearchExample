@@ -1,15 +1,15 @@
 package com.example.rxjavasearchexample
 
-import android.app.SearchManager
-import android.content.Context
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.widget.SearchView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.ObservableSource
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -20,9 +20,13 @@ class MainActivity : AppCompatActivity() {
 
     private val subscriptions = CompositeDisposable()
 
+    lateinit var newsRecyclerView: RecyclerView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        newsRecyclerView = findViewById(R.id.news_recyclerView)
 
     }
 
@@ -56,9 +60,10 @@ class MainActivity : AppCompatActivity() {
                     result -> NetworkCall(result)  //making network call to the server
 
             }
-            .subscribe { text ->
-                Log.d("subscriber", "subscriber: $text")
+            .subscribe { newsData ->
+
                 //actual results of the search are fetched here
+                displayNewsData(newsData)
             })
         return true
     }
@@ -79,4 +84,14 @@ class MainActivity : AppCompatActivity() {
             .observeOn(AndroidSchedulers.mainThread())
     }
 
+    fun displayNewsData(newsData:NewsModel.Result){
+
+        val newsModel = newsData.response
+        val newsList = newsModel.docs
+        val mListAdapter = NewsListAdapter(newsList)
+        val mLayoutManager = LinearLayoutManager(this)
+        newsRecyclerView.setLayoutManager(mLayoutManager)
+        newsRecyclerView.setItemAnimator(DefaultItemAnimator())
+        newsRecyclerView.setAdapter(mListAdapter)
+    }
 }
